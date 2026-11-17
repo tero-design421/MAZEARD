@@ -1,0 +1,618 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101710">
+<title>MAZEARD | Beyond the Unknown</title>
+
+<style>
+:root {
+  --bg:#101710;
+  --panel:#1b271e;
+  --gold:#d7b875;
+  --green:#83a77c;
+  --text:#eee9d9;
+  --muted:#a6ad9c;
+  --red:#bd6262;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Georgia,serif;min-height:100vh;
+}
+header{
+  padding:20px 5%;display:flex;justify-content:space-between;
+  align-items:center;border-bottom:1px solid #384535;
+  background:#111a13;position:sticky;top:0;z-index:5;
+}
+.logo{font-size:27px;letter-spacing:5px;color:var(--gold)}
+.logo small{display:block;font-size:9px;letter-spacing:4px;color:var(--muted)}
+.stats{font:13px Arial;color:var(--gold)}
+nav{
+  display:flex;justify-content:center;gap:8px;padding:15px;
+  flex-wrap:wrap;background:#172119;
+}
+nav button,.action{
+  background:#29372b;color:var(--text);border:1px solid #52604b;
+  padding:11px 17px;cursor:pointer;border-radius:5px;
+}
+nav button.active,nav button:hover,.action:hover{
+  background:#a38a52;color:#101710;
+}
+main{max-width:1100px;margin:auto;padding:25px 18px}
+section{display:none}
+section.active{display:block}
+h1,h2,h3{color:var(--gold)}
+.subtitle{color:var(--muted);font:13px Arial;line-height:1.7}
+.hero{
+  min-height:340px;border:1px solid #52604b;border-radius:10px;
+  padding:35px;display:flex;flex-direction:column;justify-content:end;
+  background:
+  linear-gradient(0deg,#101710 0%,transparent 100%),
+  radial-gradient(ellipse at 70% 25%,#82935b 0%,transparent 35%),
+  linear-gradient(135deg,#263d2c,#17251d 50%,#34432c);
+}
+.hero h1{font-size:42px;margin:0 0 10px}
+.panel{
+  background:var(--panel);border:1px solid #3e503e;
+  border-radius:8px;padding:18px;margin:15px 0;
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:13px}
+.card{
+  background:#202e24;border:1px solid #52604b;
+  border-radius:7px;padding:15px;
+}
+.card h3{margin:5px 0}
+.tag{font:10px Arial;color:var(--green);letter-spacing:2px}
+.hp{height:7px;background:#493737;border-radius:10px;margin:10px 0}
+.hp span{display:block;height:100%;background:#8eaa70;border-radius:10px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button{font-family:Arial,sans-serif}
+.scene{
+  min-height:280px;border-radius:8px;padding:25px;
+  background:linear-gradient(160deg,#536b42,#263e2d 55%,#18251c);
+  display:flex;flex-direction:column;justify-content:space-between;
+  border:1px solid #82916a;
+}
+.scene-title{font-size:25px;text-shadow:0 2px 8px #000}
+.npc{background:#18271e;padding:15px;border-left:3px solid var(--gold)}
+.maze{
+  display:grid;grid-template-columns:repeat(10,minmax(0,1fr));
+  gap:3px;margin:15px 0;
+}
+.tile{
+  aspect-ratio:1;background:#354b36;border:1px solid #627456;
+  color:#eee;font-size:clamp(10px,2vw,17px);cursor:pointer;
+  border-radius:3px;
+}
+.tile.wall{background:#121a15}
+.tile.player{background:#b29a55;color:#111}
+.tile.visited{background:#536c4b}
+.tile.exit{background:#765d91}
+.battlefield{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:8px;margin:15px 0;
+}
+.unit{
+  background:#29382c;border:1px solid #63765b;
+  border-radius:5px;padding:10px 4px;text-align:center;
+  font:12px Arial;cursor:pointer;
+}
+.unit.enemy{border-color:#925252;background:#3b2525}
+.unit.selected{outline:2px solid var(--gold)}
+.unit.dead{opacity:.25;filter:grayscale(1)}
+.log{
+  background:#111a13;padding:12px;height:120px;overflow:auto;
+  font:12px Arial;color:#c8d1bb;line-height:1.8;
+}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+footer{text-align:center;padding:25px;color:#7d8b79;font:11px Arial}
+@media(max-width:500px){
+ header{padding:15px 10px}.logo{font-size:21px}
+ .stats{font-size:10px}
+ .hero{min-height:280px;padding:20px}
+ .hero h1{font-size:33px}
+ main{padding:15px 10px}
+ .battlefield{gap:4px}
+ .unit{font-size:10px;padding:8px 2px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">MAZEARD<small>BEYOND THE UNKNOWN</small></div>
+  <div class="stats">
+    <span id="gold">◆ 100</span> &nbsp;|&nbsp;
+    <span id="level">LEVEL 1</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="show('home',this)">Home</button>
+  <button onclick="show('village',this)">Village</button>
+  <button onclick="show('roster',this)">Characters</button>
+  <button onclick="show('expedition',this)">Expedition</button>
+  <button onclick="show('battle',this)">Battle</button>
+</nav>
+
+<main>
+
+<!-- HOME -->
+<section id="home" class="active">
+  <div class="hero">
+    <div class="tag">A NEW WORLD AWAITS</div>
+    <h1>Beyond the Unknown</h1>
+    <p class="subtitle">
+      A magical world shaped by ancient mysteries and futuristic technology.
+      Build your team. Explore the unknown. Discover your destiny.
+    </p>
+    <div class="actions">
+      <button class="action" onclick="show('village')">Enter Village →</button>
+      <button class="action" onclick="show('expedition')">Start Expedition →</button>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="tag">YOUR JOURNEY</div>
+      <h3>Explore</h3>
+      <p class="subtitle">Discover mysterious places and forgotten secrets.</p>
+    </div>
+    <div class="card">
+      <div class="tag">YOUR TEAM</div>
+      <h3>Recruit</h3>
+      <p class="subtitle">Meet unique characters with extraordinary powers.</p>
+    </div>
+    <div class="card">
+      <div class="tag">YOUR DESTINY</div>
+      <h3>Conquer</h3>
+      <p class="subtitle">Survive tactical battles and dangerous expeditions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VILLAGE -->
+<section id="village">
+  <h1>The Forgotten Village</h1>
+  <p class="subtitle">A settlement hidden between ancient trees and forgotten technology.</p>
+
+  <div class="scene">
+    <div class="scene-title">🌲 The Village of Eldoria</div>
+    <div class="npc">
+      <strong>Old Wanderer</strong>
+      <p class="subtitle" id="npcText">
+        "Traveler, the forest holds secrets. Not everyone here is what they seem."
+      </p>
+      <button class="action" onclick="talk()">Talk to Wanderer</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Meet the Locals</h3>
+    <p class="subtitle">Listen to their stories and discover potential companions.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>🌿 The Herbalist</h3>
+        <p class="subtitle">Knows ancient healing techniques.</p>
+        <button class="action" onclick="npcMessage('The Herbalist','I know someone who can heal an entire team.')">Talk</button>
+      </div>
+      <div class="card">
+        <h3>⚔ The Guardian</h3>
+        <p class="subtitle">Protects the village entrance.</p>
+        <button class="action" onclick="npcMessage('The Guardian','A powerful defender is hiding beyond the northern forest.')">Talk</button>
+      </div>
+      <div class="card">
+        <h3>🔮 The Mystic</h3>
+        <p class="subtitle">Studies unusual magical phenomena.</p>
+        <button class="action" onclick="npcMessage('The Mystic','There is someone who can turn an enemy into an ally.')">Talk</button>
+      </div>
+    </div>
+  </div>
+  <p class="subtitle" id="villageMessage"></p>
+</section>
+
+<!-- CHARACTERS -->
+<section id="roster">
+  <h1>Character Collection</h1>
+  <p class="subtitle">Every hero has a unique role and special ability.</p>
+  <div class="grid" id="characterList"></div>
+</section>
+
+<!-- EXPEDITION -->
+<section id="expedition">
+  <h1>The Ancient Maze</h1>
+  <p class="subtitle">Explore the forgotten paths. Find the exit. Beware of the unknown.</p>
+
+  <div class="panel">
+    <div class="grid">
+      <div><div class="tag">MOVEMENT</div><h2 id="steps">0</h2></div>
+      <div><div class="tag">DICE RESULT</div><h2 id="dice">-</h2></div>
+      <div><div class="tag">TIME REWINDS</div><h2 id="rewinds">3</h2></div>
+    </div>
+    <div class="maze" id="maze"></div>
+    <div class="actions">
+      <button class="action" onclick="rollDice()">🎲 Roll Dice</button>
+      <button class="action" onclick="useCompass()">🧭 Compass</button>
+      <button class="action" onclick="rewind()">↶ Rewind Time</button>
+      <button class="action" onclick="resetMaze()">Restart</button>
+    </div>
+    <p class="subtitle" id="mazeMessage">Your expedition begins here.</p>
+  </div>
+</section>
+
+<!-- BATTLE -->
+<section id="battle">
+  <h1>Tactical Combat</h1>
+  <p class="subtitle">Select an ally, choose an ability, and defeat the enemy team.</p>
+
+  <div class="panel">
+    <div class="grid">
+      <div>
+        <div class="tag">YOUR TEAM</div>
+        <h3 id="allyCount">5 Allies</h3>
+      </div>
+      <div>
+        <div class="tag">ENEMY TEAM</div>
+        <h3 id="enemyCount">5 Enemies</h3>
+      </div>
+    </div>
+    <h3>Allies — Select a character</h3>
+    <div class="battlefield" id="allies"></div>
+    <h3>Enemies — Select a target</h3>
+    <div class="battlefield" id="enemies"></div>
+    <div class="panel">
+      <div class="tag">SELECTED HERO</div>
+      <h3 id="selectedName">Select a hero</h3>
+      <p class="subtitle" id="selectedInfo">Choose a character to see their abilities.</p>
+      <div class="actions" id="abilityButtons"></div>
+    </div>
+    <button class="action" onclick="basicAttack()">⚔ Basic Attack</button>
+    <button class="action" onclick="startBattle()">New Battle</button>
+    <h3>Battle Log</h3>
+    <div class="log" id="battleLog">The battlefield awaits...</div>
+  </div>
+</section>
+
+</main>
+
+<footer>MAZEARD © 2026 — BEYOND THE UNKNOWN</footer>
+
+<script>
+const heroes = [
+ {id:0,name:"Auron",role:"Tank",hp:140,max:140,attack:15,ability:"Shield Wall",desc:"Protects the team by absorbing damage.",cooldown:2,cd:0},
+ {id:1,name:"Elia",role:"Support",hp:90,max:90,attack:22,ability:"Power Surge",desc:"Doubles team attack power for one turn.",cooldown:2,cd:0},
+ {id:2,name:"Nyra",role:"Mystic",hp:85,max:85,attack:18,ability:"Mind Control",desc:"Temporarily converts one enemy into an ally.",cooldown:4,cd:0},
+ {id:3,name:"Liora",role:"Healer",hp:100,max:100,attack:10,ability:"Mass Healing",desc:"Restores health to the entire team.",cooldown:7,cd:0},
+ {id:4,name:"Kael",role:"Ranged",hp:95,max:95,attack:28,ability:"Piercing Shot",desc:"Deals powerful long-range damage.",cooldown:2,cd:0}
+];
+
+let selectedHero=0;
+let selectedEnemy=0;
+let powerBoost=0;
+let shieldActive=false;
+let battleOver=false;
+let gold=100;
+let talkCount=0;
+let enemies=[];
+let rewinds=3;
+let steps=0;
+let position=0;
+let previousPosition=0;
+let mazeFinished=false;
+let convertedEnemy=null;
+
+function show(id,btn){
+ document.querySelectorAll("main section").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ if(id==="battle")renderBattle();
+ if(id==="roster")renderHeroes();
+ if(id==="expedition")renderMaze();
+}
+
+function updateGold(){
+ document.getElementById("gold").textContent="◆ "+gold;
+}
+
+function renderHeroes(){
+ const container=document.getElementById("characterList");
+ container.innerHTML="";
+ heroes.forEach(h=>{
+  container.innerHTML+=`
+  <div class="card">
+   <div class="tag">${h.role.toUpperCase()}</div>
+   <h3>${h.name}</h3>
+   <div class="hp"><span style="width:${h.hp/h.max*100}%"></span></div>
+   <p class="subtitle">HP: ${h.hp}/${h.max}</p>
+   <p><strong>${h.ability}</strong></p>
+   <p class="subtitle">${h.desc}</p>
+   <p class="subtitle">Attack: ${h.attack}</p>
+  </div>`;
+ });
+}
+
+function talk(){
+ const messages=[
+  '"There are five paths beyond the forest. Each one leads somewhere different."',
+  '"I once met a warrior who could protect an entire squad."',
+  '"Some people carry powers that even they do not understand."',
+  '"The ancient maze changes for those who dare to enter."'
+ ];
+ document.getElementById("npcText").textContent=messages[talkCount%messages.length];
+ talkCount++;
+}
+
+function npcMessage(name,message){
+ document.getElementById("villageMessage").textContent=name+": "+message;
+}
+
+function renderMaze(){
+ const maze=document.getElementById("maze");
+ maze.innerHTML="";
+ for(let i=0;i<100;i++){
+  let cell=document.createElement("button");
+  cell.className="tile";
+  if(i===position){
+   cell.classList.add("player");cell.textContent="🧙";
+  }else if(i===99){
+   cell.classList.add("exit");cell.textContent="🚪";
+  }else if(Math.random()>.87){
+   cell.classList.add("wall");
+  }else{
+   cell.classList.add("visited");
+   cell.textContent="·";
+  }
+  cell.onclick=()=>moveTo(i);
+  maze.appendChild(cell);
+ }
+ document.getElementById("steps").textContent=steps;
+ document.getElementById("rewinds").textContent=rewinds;
+}
+
+function moveTo(target){
+ if(mazeFinished)return;
+ if(Math.abs(Math.floor(target/10)-Math.floor(position/10))+
+ Math.abs(target%10-position%10)!==1){
+  document.getElementById("mazeMessage").textContent="You can only move to an adjacent tile.";
+  return;
+ }
+ previousPosition=position;
+ position=target;
+ steps++;
+ mazeEvent();
+ renderMaze();
+}
+
+function mazeEvent(){
+ if(position===99){
+  mazeFinished=true;
+  gold+=50;updateGold();
+  document.getElementById("mazeMessage").textContent="Expedition completed! You found the exit and earned 50 gold.";
+  return;
+ }
+ const events=[
+  "You discovered an ancient symbol. Something is watching.",
+  "A hidden energy source restores your courage.",
+  "You hear strange sounds coming from the trees.",
+  "You found a forgotten treasure. +10 gold!",
+  "The path ahead feels dangerous..."
+ ];
+ let event=events[Math.floor(Math.random()*events.length)];
+ if(event.includes("+10")){
+  gold+=10;updateGold();
+ }
+ document.getElementById("mazeMessage").textContent=event;
+}
+
+function rollDice(){
+ if(mazeFinished)return;
+ let n=Math.floor(Math.random()*6)+1;
+ document.getElementById("dice").textContent=n;
+ let dir=Math.random()<.5?1:10;
+ let target=position+dir*n;
+ target=Math.min(99,target);
+ previousPosition=position;
+ position=target;
+ steps+=n;
+ mazeEvent();
+ renderMaze();
+}
+
+function useCompass(){
+ if(mazeFinished)return;
+ let directions=[1,-1,10,-10];
+ let d=directions[Math.floor(Math.random()*4)];
+ let target=Math.max(0,Math.min(99,position+d));
+ previousPosition=position;
+ position=target;
+ steps++;
+ mazeEvent();
+ renderMaze();
+}
+
+function rewind(){
+ if(rewinds<=0){
+  document.getElementById("mazeMessage").textContent="No time rewinds remaining.";
+  return;
+ }
+ if(steps===0)return;
+ position=previousPosition;
+ steps=Math.max(0,steps-1);
+ rewinds--;
+ mazeFinished=false;
+ document.getElementById("mazeMessage").textContent="Time has been reversed.";
+ renderMaze();
+}
+
+function resetMaze(){
+ position=0;previousPosition=0;steps=0;rewinds=3;mazeFinished=false;
+ document.getElementById("dice").textContent="-";
+ document.getElementById("mazeMessage").textContent="A new expedition begins.";
+ renderMaze();
+}
+
+// BATTLE SYSTEM
+
+function makeEnemies(){
+ return Array.from({length:5},(_,i)=>({
+  name:["Raider","Shadow","Hunter","Warden","Beast"][i],
+  hp:90,max:90,attack:13,alive:true
+ }));
+}
+
+function startBattle(){
+ heroes.forEach(h=>{h.hp=h.max;h.cd=0});
+ enemies=makeEnemies();
+ selectedHero=0;selectedEnemy=0;
+ powerBoost=0;shieldActive=false;battleOver=false;convertedEnemy=null;
+ document.getElementById("battleLog").innerHTML="A new battle begins!<br>";
+ renderBattle();
+}
+
+function log(message){
+ const box=document.getElementById("battleLog");
+ box.innerHTML+=message+"<br>";
+ box.scrollTop=box.scrollHeight;
+}
+
+function renderBattle(){
+ if(enemies.length===0)enemies=makeEnemies();
+
+ const allies=document.getElementById("allies");
+ const foes=document.getElementById("enemies");
+ allies.innerHTML="";
+ foes.innerHTML="";
+
+ heroes.forEach((h,i)=>{
+  let div=document.createElement("div");
+  div.className="unit"+(h.hp<=0?" dead":"")+(selectedHero===i?" selected":"");
+  div.innerHTML=`<strong>${h.name}</strong><br>${h.hp}/${h.max}<br>${h.role}`;
+  div.onclick=()=>{selectedHero=i;renderBattle()};
+  allies.appendChild(div);
+ });
+
+ enemies.forEach((e,i)=>{
+  let div=document.createElement("div");
+  div.className="unit enemy"+(!e.alive?" dead":"")+(selectedEnemy===i?" selected":"");
+  div.innerHTML=`<strong>${e.name}</strong><br>${e.hp}/${e.max}<br>Enemy`;
+  div.onclick=()=>{selectedEnemy=i;renderBattle()};
+  foes.appendChild(div);
+ });
+
+ document.getElementById("allyCount").textContent=heroes.filter(h=>h.hp>0).length+" Allies";
+ document.getElementById("enemyCount").textContent=enemies.filter(e=>e.alive).length+" Enemies";
+
+ let h=heroes[selectedHero];
+ document.getElementById("selectedName").textContent=h.name;
+ document.getElementById("selectedInfo").textContent=
+ `${h.role} | HP ${h.hp}/${h.max} | ${h.ability} | Cooldown: ${h.cd}`;
+
+ const buttons=document.getElementById("abilityButtons");
+ buttons.innerHTML="";
+ let b=document.createElement("button");
+ b.className="action";
+ b.textContent=h.ability+(h.cd>0?" ("+h.cd+")":"");
+ b.disabled=h.hp<=0||h.cd>0||battleOver;
+ b.onclick=useAbility;
+ buttons.appendChild(b);
+}
+
+function basicAttack(){
+ if(battleOver)return;
+ let h=heroes[selectedHero],e=enemies[selectedEnemy];
+ if(!h||h.hp<=0||!e||!e.alive)return;
+ let damage=Math.round(h.attack*(powerBoost>0?2:1));
+ e.hp-=damage;
+ log(h.name+" attacks "+e.name+" for "+damage+" damage.");
+ if(e.hp<=0){e.hp=0;e.alive=false;log(e.name+" has been defeated!")}
+ endTurn();
+}
+
+function useAbility(){
+ if(battleOver)return;
+ let h=heroes[selectedHero];
+ if(h.hp<=0||h.cd>0)return;
+
+ if(h.id===0){
+  shieldActive=true;
+  log("Auron activates Shield Wall!");
+ }
+ if(h.id===1){
+  powerBoost=1;
+  log("Elia doubles the team's attack power for one turn!");
+ }
+ if(h.id===2){
+  let e=enemies[selectedEnemy];
+  if(!e||!e.alive)return;
+  e.alive=false;
+  convertedEnemy=e;
+  log(e.name+" has been converted into an ally for one turn!");
+ }
+ if(h.id===3){
+  heroes.forEach(x=>{
+   if(x.hp>0)x.hp=Math.min(x.max,x.hp+35);
+  });
+  log("Liora restores 35 HP to all living allies!");
+ }
+ if(h.id===4){
+  let e=enemies[selectedEnemy];
+  if(!e||!e.alive)return;
+  e.hp-=55;
+  log("Kael fires a Piercing Shot for 55 damage!");
+  if(e.hp<=0){e.hp=0;e.alive=false;log(e.name+" has been defeated!")}
+ }
+
+ h.cd=h.cooldown;
+ endTurn();
+}
+
+function endTurn(){
+ if(enemies.every(e=>!e.alive)){
+  battleOver=true;
+  gold+=30;updateGold();
+  log("VICTORY! You earned 30 gold.");
+  renderBattle();return;
+ }
+
+ let livingEnemies=enemies.filter(e=>e.alive);
+ let livingHeroes=heroes.filter(h=>h.hp>0);
+ if(livingHeroes.length===0){
+  battleOver=true;log("DEFEAT! Your team has fallen.");
+  renderBattle();return;
+ }
+
+ livingEnemies.forEach(e=>{
+  let targets=heroes.filter(h=>h.hp>0);
+  if(targets.length===0)return;
+  let target=targets[Math.floor(Math.random()*targets.length)];
+  let damage=shieldActive?Math.ceil(e.attack/2):e.attack;
+  target.hp=Math.max(0,target.hp-damage);
+  log(e.name+" attacks "+target.name+" for "+damage+" damage.");
+ });
+
+ shieldActive=false;
+ if(convertedEnemy){
+  convertedEnemy.hp=Math.max(0,convertedEnemy.hp-20);
+  convertedEnemy=null;
+ }
+ if(powerBoost>0)powerBoost=0;
+ heroes.forEach(h=>{if(h.cd>0)h.cd--});
+
+ if(heroes.every(h=>h.hp<=0)){
+  battleOver=true;log("DEFEAT! Your team has fallen.");
+ }
+ renderBattle();
+}
+
+startBattle();
+renderHeroes();
+renderMaze();
+updateGold();
+</script>
+</body>
+  </html>
+  
